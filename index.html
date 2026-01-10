@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAVACH - V2P Safety System Simulation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #161622;
+            --teal: #00ffcc;
+            --teal-bright: #00ffee;
+            --teal-dim: rgba(0, 255, 204, 0.3);
+            --teal-glow: rgba(0, 255, 204, 0.5);
+            --cyan: #00e5ff;
+            --cyan-bright: #40efff;
+            --red: #ff5a5a;
+            --red-bright: #ff7070;
+            --red-dim: rgba(255, 90, 90, 0.3);
+            --gold: #ffd700;
+            --gold-bright: #ffe44d;
+            --text-primary: #ffffff;
+            --text-secondary: #c8d4de;
+            --text-dim: #7b8a9a;
+            --ms-glow: 0 0 20px rgba(0, 255, 204, 0.6), 0 0 40px rgba(0, 255, 204, 0.3);
+            --gold-glow: 0 0 15px rgba(255, 215, 0, 0.7), 0 0 30px rgba(255, 215, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Subtle grid background */
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        /* Signal flow waves */
+        .bg-waves {
+            position: absolute;
+            inset: 0;
+            opacity: 0.05;
+            background: radial-gradient(ellipse at 20% 50%, var(--teal) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 50%, var(--teal) 0%, transparent 50%);
+            animation: waveFlow 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes waveFlow {
+            0%, 100% { opacity: 0.03; }
+            50% { opacity: 0.07; }
+        }
+
+        /* START SCREEN OVERLAY */
+        .start-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 10, 18, 0.98);
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .start-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .start-content {
+            text-align: center;
+            max-width: 700px;
+            padding: 40px;
+        }
+
+        .start-title {
+            font-size: 52px;
+            font-weight: 300;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            letter-spacing: 2px;
+        }
+
+        .start-title span {
+            color: var(--teal-bright);
+            font-weight: 700;
+            text-shadow: var(--ms-glow);
+        }
+
+        .kavach-logo {
+            font-size: 72px;
+            font-weight: 900;
+            letter-spacing: 12px;
+            color: var(--teal-bright);
+            text-shadow: var(--ms-glow), 0 0 60px rgba(0, 255, 204, 0.5);
+            margin-bottom: 10px;
+            animation: kavachPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes kavachPulse {
+            0%, 100% { text-shadow: var(--ms-glow), 0 0 60px rgba(0, 255, 204, 0.5); }
+            50% { text-shadow: var(--ms-glow), 0 0 100px rgba(0, 255, 204, 0.8), 0 0 150px rgba(0, 255, 204, 0.4); }
+        }
+
+        .start-subtitle {
+            font-size: 22px;
+            color: var(--text-secondary);
+            margin-bottom: 50px;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+
+        .start-btn {
+            background: transparent;
+            border: 3px solid var(--teal);
+            color: var(--teal-bright);
+            padding: 20px 60px;
+            font-size: 20px;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 4px;
+            border-radius: 8px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--teal);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+        }
+
+        .start-btn:hover {
+            color: var(--bg-primary);
+            box-shadow: 0 0 50px var(--teal-dim), 0 0 100px rgba(0, 255, 204, 0.2);
+            transform: scale(1.05);
+        }
+
+        .start-btn:hover::before {
+            opacity: 1;
+        }
+
+        .start-hint {
+            margin-top: 40px;
+            font-size: 16px;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .start-hint .duration {
+            color: var(--gold-bright);
+            font-weight: 800;
+            text-shadow: var(--gold-glow);
+        }
+
+        /* Main container */
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* TOP LAYER - System Flow */
+        .top-layer {
+            height: 28%;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 20px;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        .top-layer.active {
+            opacity: 1;
+        }
+
+        .pipeline {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transform: scale(0.82);
+        }
+
+        .pipeline-node {
+            background: var(--bg-card);
+            border: 2px solid var(--text-dim);
+            padding: 14px 20px;
+            min-width: 150px;
+            text-align: center;
+            transition: all 0.5s ease;
+            position: relative;
+            border-radius: 8px;
+        }
+
+        .pipeline-node.active {
+            border-color: var(--teal);
+            box-shadow: 0 0 30px var(--teal-dim), inset 0 0 20px rgba(0, 255, 204, 0.05);
+        }
+
+        /* Step number badge */
+        .pipeline-node .step-number {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 24px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--text-dim);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 900;
+            color: var(--text-dim);
+            transition: all 0.5s ease;
+        }
+
+        .pipeline-node.active .step-number {
+            background: var(--teal);
+            border-color: var(--teal);
+            color: var(--bg-primary);
+            box-shadow: 0 0 15px var(--teal-dim);
+        }
+
+        .pipeline-node h4 {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            margin-top: 6px;
+            transition: color 0.5s ease;
+        }
+
+        .pipeline-node.active h4 {
+            color: var(--teal-bright);
+            text-shadow: 0 0 15px var(--teal-dim);
+        }
+
+        .pipeline-node .details {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .pipeline-node.active .details {
+            opacity: 1;
+            max-height: 100px;
+        }
+
+        .pipeline-node .details .ms-tag {
+            color: var(--teal-bright);
+            font-weight: 800;
+            text-shadow: var(--ms-glow);
+        }
+
+        .pipeline-node .details .ms-unit {
+            color: var(--gold-bright);
+            font-weight: 900;
+            text-shadow: var(--gold-glow);
+        }
+
+        /* TTC Highlight Styles */
+        .ttc-highlight {
+            background: linear-gradient(135deg, rgba(255, 90, 90, 0.2) 0%, rgba(255, 90, 90, 0.1) 100%);
+            border: 2px solid var(--red);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            animation: ttcPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes ttcPulse {
+            0%, 100% { 
+                box-shadow: 0 0 10px rgba(255, 90, 90, 0.3);
+                border-color: var(--red);
+            }
+            50% { 
+                box-shadow: 0 0 25px rgba(255, 90, 90, 0.6), 0 0 40px rgba(255, 90, 90, 0.3);
+                border-color: var(--red-bright);
+            }
+        }
+
+        .ttc-label {
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--red-bright);
+            text-shadow: 0 0 10px var(--red-dim);
+        }
+
+        .ttc-value {
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--red-bright);
+            text-shadow: 0 0 20px rgba(255, 90, 90, 0.7), 0 0 40px rgba(255, 90, 90, 0.4);
+            line-height: 1;
+        }
+
+        .ttc-unit {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--gold-bright);
+            text-shadow: var(--gold-glow);
+            margin-left: 2px;
+        }
+
+        .mcu-risk {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .mcu-risk .risk-high {
+            color: var(--red-bright);
+            font-weight: 900;
+            text-shadow: 0 0 10px var(--red-dim);
+            animation: riskBlink 1s ease-in-out infinite;
+        }
+
+        @keyframes riskBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .mcu-compute {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* MCU Enhanced Styles */
+        .mcu-node {
+            min-width: 170px !important;
+        }
+
+        /* MEC Enhanced Styles */
+        .mec-node {
+            min-width: 210px !important;
+        }
+
+        .mec-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 10px;
+            margin-bottom: 10px;
+        }
+
+        .mec-feature {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-primary);
+            background: rgba(0, 255, 204, 0.08);
+            border: 1px solid rgba(0, 255, 204, 0.25);
+            border-radius: 4px;
+            padding: 5px 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .pipeline-node.active .mec-feature {
+            background: rgba(0, 255, 204, 0.15);
+            border-color: rgba(0, 255, 204, 0.5);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+        }
+
+        .mec-icon {
+            font-size: 11px;
+        }
+
+        .mec-process {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-align: center;
+            padding-top: 6px;
+            border-top: 1px solid rgba(0, 255, 204, 0.2);
+        }
+
+        .pipeline-connector {
+            width: 80px;
+            height: 4px;
+            background: var(--text-dim);
+            position: relative;
+            transition: all 0.5s ease;
+            margin: 0 8px;
+        }
+
+        .pipeline-connector::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 12px solid var(--text-dim);
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            transition: border-color 0.5s ease;
+        }
+
+        .pipeline-connector.active {
+            background: linear-gradient(90deg, var(--teal), var(--cyan));
+            box-shadow: 0 0 15px var(--teal-dim);
+        }
+
+        .pipeline-connector.active::after {
+            border-left-color: var(--cyan);
+            filter: drop-shadow(0 0 8px var(--teal-dim));
+        }
+
+        /* Animated flow dots on connector */
+        .pipeline-connector.active::before {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--teal-bright);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: flowDot 1s ease-in-out infinite;
+            box-shadow: 0 0 10px var(--teal), 0 0 20px var(--teal-dim);
+        }
+
+        @keyframes flowDot {
+            0% { left: 0; opacity: 1; }
+            100% { left: calc(100% - 8px); opacity: 0.3; }
+        }
+
+        .pipeline-connector .latency-label {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--teal-bright);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            white-space: nowrap;
+            text-shadow: var(--ms-glow);
+            background: rgba(10, 10, 15, 0.9);
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--teal-dim);
+        }
+
+        .pipeline-connector .latency-label .ms-unit {
+            color: var(--gold-bright);
+            font-weight: 900;
+            text-shadow: var(--gold-glow);
+            font-size: 14px;
+        }
+
+        .pipeline-connector.active .latency-label {
+            opacity: 1;
+        }
+
+        .pipeline-caption {
+            margin-top: 14px;
+            font-size: 16px;
+            color: var(--text-secondary);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .pipeline-caption.active {
+            opacity: 1;
+        }
+
+        /* MIDDLE LAYER - Road & Vehicle */
+        .middle-layer {
+            height: 42%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .road {
+            position: absolute;
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(180deg, #1a1a28 0%, #0f0f18 100%);
+            top: 50%;
+            transform: translateY(-50%);
+            border-top: 3px solid #2a2a3a;
+            border-bottom: 3px solid #2a2a3a;
+        }
+
+        .road-lines {
+            position: absolute;
+            width: 100%;
+            height: 5px;
+            background: repeating-linear-gradient(90deg, #4a4a5a 0px, #4a4a5a 40px, transparent 40px, transparent 80px);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Vehicle */
+        .vehicle {
+            position: absolute;
+            left: -120px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            transition: left 20s linear;
+        }
+
+        .vehicle-body {
+            width: 100px;
+            height: 40px;
+            background: linear-gradient(180deg, #3a3a4a 0%, #1a1a28 100%);
+            border-radius: 10px 24px 4px 4px;
+            border: 2px solid #4a4a5a;
+            position: relative;
+        }
+
+        .vehicle-body::before {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 20px;
+            background: linear-gradient(180deg, #1a1a28 0%, #0f0f18 100%);
+            border-radius: 5px 12px 0 0;
+            top: -18px;
+            left: 20px;
+            border: 2px solid #4a4a5a;
+            border-bottom: none;
+        }
+
+        .vehicle-wheels {
+            position: absolute;
+            bottom: -10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 12px;
+        }
+
+        .wheel {
+            width: 16px;
+            height: 16px;
+            background: #1a1a28;
+            border-radius: 50%;
+            border: 3px solid #4a4a5a;
+        }
+
+        .vehicle-headlights {
+            position: absolute;
+            right: -5px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .headlight {
+            width: 8px;
+            height: 8px;
+            background: #fffacd;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #fffacd, 0 0 30px rgba(255, 250, 205, 0.5);
+        }
+
+        .speed-label {
+            position: absolute;
+            bottom: -38px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            background: rgba(10, 10, 15, 0.95);
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--text-dim);
+        }
+
+        .speed-label .speed-value {
+            color: var(--cyan-bright);
+            font-weight: 800;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+        }
+
+        /* Radar Module */
+        .radar-module {
+            position: absolute;
+            right: -85px;
+            top: -38px;
+            text-align: center;
+        }
+
+        .radar-label {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--teal-bright);
+            letter-spacing: 1.5px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 15px var(--teal-dim);
+        }
+
+        .radar-sublabel {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .radar-cone {
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 200px;
+            height: 100px;
+            opacity: 0.2;
+            background: linear-gradient(90deg, var(--teal) 0%, transparent 100%);
+            clip-path: polygon(0 40%, 100% 0%, 100% 100%, 0 60%);
+            animation: radarPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes radarPulse {
+            0%, 100% { opacity: 0.15; }
+            50% { opacity: 0.35; }
+        }
+
+        /* Pedestrian */
+        .pedestrian {
+            position: absolute;
+            right: 12%;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            z-index: 5;
+        }
+
+        .pedestrian.visible {
+            opacity: 1;
+        }
+
+        .pedestrian-icon {
+            width: 35px;
+            height: 65px;
+            position: relative;
+        }
+
+        .pedestrian-head {
+            width: 18px;
+            height: 18px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            margin: 0 auto 4px;
+        }
+
+        .pedestrian-body {
+            width: 6px;
+            height: 25px;
+            background: var(--text-secondary);
+            margin: 0 auto;
+            border-radius: 3px;
+        }
+
+        .pedestrian-legs {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .pedestrian-leg {
+            width: 6px;
+            height: 18px;
+            background: var(--text-secondary);
+            border-radius: 3px;
+        }
+
+        .pedestrian-glow {
+            position: absolute;
+            inset: -30px;
+            background: radial-gradient(circle, var(--red-dim) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            border-radius: 50%;
+        }
+
+        .pedestrian.alert .pedestrian-glow {
+            opacity: 1;
+            animation: alertPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 1; }
+        }
+
+        .pedestrian-phone {
+            position: absolute;
+            left: -55px;
+            top: 12px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .pedestrian.alert .pedestrian-phone {
+            opacity: 1;
+        }
+
+        .phone-body {
+            width: 28px;
+            height: 50px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--text-dim);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .phone-screen {
+            width: 20px;
+            height: 36px;
+            background: var(--red-dim);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            animation: phoneFlash 0.5s ease-in-out infinite;
+        }
+
+        @keyframes phoneFlash {
+            0%, 100% { background: var(--red-dim); }
+            50% { background: rgba(255, 90, 90, 0.6); }
+        }
+
+        .detection-info {
+            position: absolute;
+            right: calc(12% + 80px);
+            top: 20%;
+            text-align: right;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .detection-info.visible {
+            opacity: 1;
+        }
+
+        .detection-info p {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--teal-bright);
+            margin-bottom: 8px;
+            text-shadow: 0 0 15px var(--teal-dim);
+        }
+
+        .detection-info span {
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .detection-info .distance-value {
+            color: var(--cyan-bright);
+            font-weight: 800;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+        }
+
+        /* Alert Popup - Repositioned to avoid collision */
+        .alert-popup {
+            position: absolute;
+            right: 3%;
+            top: 15%;
+            background: rgba(20, 20, 35, 0.98);
+            border: 2px solid var(--red);
+            border-radius: 12px;
+            padding: 18px 24px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            max-width: 280px;
+            box-shadow: 0 0 50px rgba(255, 90, 90, 0.35);
+            z-index: 20;
+        }
+
+        .alert-popup.visible {
+            opacity: 1;
+        }
+
+        .alert-popup .alert-icon {
+            color: var(--red-bright);
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .alert-popup .alert-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--red-bright);
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px var(--red-dim);
+        }
+
+        .alert-popup .alert-subtitle {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            font-weight: 600;
+        }
+
+        .alert-popup .alert-time {
+            font-size: 17px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .alert-popup .alert-time .ms-highlight {
+            color: var(--teal-bright);
+            font-weight: 900;
+            font-size: 22px;
+            text-shadow: var(--ms-glow);
+        }
+
+        .alert-popup .alert-time .ms-unit {
+            color: var(--gold-bright);
+            font-weight: 900;
+            font-size: 18px;
+            text-shadow: var(--gold-glow);
+        }
+
+        /* BOTTOM LAYER - Latency & Outcome */
+        .bottom-layer {
+            height: 30%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        .bottom-layer.active {
+            opacity: 1;
+        }
+
+        .latency-display {
+            text-align: center;
+        }
+
+        .latency-label-main {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .latency-value-container {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .latency-value {
+            font-size: 120px;
+            font-weight: 300;
+            color: var(--teal-bright);
+            letter-spacing: -4px;
+            line-height: 1;
+            text-shadow: var(--ms-glow), 0 0 80px rgba(0, 255, 204, 0.5);
+            animation: latencyGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes latencyGlow {
+            0%, 100% { text-shadow: var(--ms-glow), 0 0 80px rgba(0, 255, 204, 0.5); }
+            50% { text-shadow: var(--ms-glow), 0 0 120px rgba(0, 255, 204, 0.7); }
+        }
+
+        .latency-unit {
+            font-size: 52px;
+            font-weight: 900;
+            color: var(--gold-bright);
+            text-shadow: var(--gold-glow), 0 0 50px rgba(255, 215, 0, 0.4);
+            animation: msGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes msGlow {
+            0%, 100% { text-shadow: var(--gold-glow), 0 0 50px rgba(255, 215, 0, 0.4); }
+            50% { text-shadow: var(--gold-glow), 0 0 80px rgba(255, 215, 0, 0.6); }
+        }
+
+        .speed-context {
+            margin-top: 14px;
+            font-size: 20px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .speed-context .speed-val {
+            color: var(--cyan-bright);
+            font-weight: 800;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+        }
+
+        /* PHASE B - Summary Overlay */
+        .summary-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 10, 18, 0.96);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+            overflow-y: auto;
+        }
+
+        .summary-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .summary-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 40px;
+            padding: 40px 60px;
+            align-items: start;
+        }
+
+        .summary-section h3 {
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 3px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--text-dim);
+        }
+
+        .summary-section ul {
+            list-style: none;
+        }
+
+        .summary-section ul li {
+            font-size: 17px;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-weight: 600;
+        }
+
+        .summary-section ul li::before {
+            content: '•';
+            color: var(--teal-bright);
+            font-size: 22px;
+            text-shadow: 0 0 10px var(--teal-dim);
+        }
+
+        .summary-section .caption {
+            margin-top: 20px;
+            font-size: 15px;
+            color: var(--teal);
+            font-style: italic;
+            font-weight: 600;
+        }
+
+        /* Center - Flow */
+        .flow-display {
+            text-align: center;
+            padding-top: 30px;
+        }
+
+        .flow-step {
+            font-size: 42px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin: 24px 0;
+        }
+
+        .flow-arrow {
+            font-size: 32px;
+            color: var(--teal-bright);
+            text-shadow: 0 0 15px var(--teal-dim);
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            font-size: 15px;
+        }
+
+        .comparison-table tr {
+            border-bottom: 1px solid #2a2a3a;
+        }
+
+        .comparison-table th {
+            text-align: left;
+            padding: 12px 8px;
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .comparison-table td {
+            padding: 12px 8px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .comparison-table .existing {
+            color: var(--text-dim);
+        }
+
+        .comparison-table .v2p,
+        .comparison-table .kavach {
+            color: var(--teal-bright);
+            font-weight: 700;
+        }
+
+        .check {
+            color: var(--teal-bright);
+            font-weight: 800;
+            text-shadow: 0 0 8px var(--teal-dim);
+        }
+
+        .cross {
+            color: var(--red);
+            font-weight: 800;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 20px 40px;
+            border-top: 2px solid #1a1a28;
+        }
+
+        .footer-disclaimer {
+            font-size: 14px;
+            color: var(--text-secondary);
+            max-width: 900px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .footer-tagline {
+            font-size: 22px;
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .footer-tagline span {
+            color: var(--teal-bright);
+            text-shadow: 0 0 15px var(--teal-dim);
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--teal), var(--cyan));
+            width: 0%;
+            z-index: 200;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 20px var(--teal-dim);
+        }
+
+        /* KAVACH Watermark during simulation */
+        .kavach-watermark {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            color: var(--teal-bright);
+            text-shadow: var(--ms-glow);
+            z-index: 150;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        .kavach-watermark.visible {
+            opacity: 1;
+        }
+
+        /* Restart button */
+        .restart-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: 2px solid var(--text-dim);
+            color: var(--text-secondary);
+            padding: 10px 22px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 150;
+            opacity: 0;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 2px;
+            border-radius: 6px;
+        }
+
+        .restart-btn:hover {
+            border-color: var(--teal);
+            color: var(--teal);
+            box-shadow: 0 0 25px var(--teal-dim);
+        }
+
+        .restart-btn.visible {
+            opacity: 1;
+        }
+
+        /* Responsive adjustments */
+        @media (max-height: 800px) {
+            .top-layer {
+                height: 26%;
+                min-height: 140px;
+            }
+            .pipeline {
+                transform: scale(0.78);
+            }
+            .pipeline-connector {
+                width: 60px;
+            }
+            .latency-value {
+                font-size: 100px;
+            }
+            .latency-unit {
+                font-size: 44px;
+            }
+            .start-title {
+                font-size: 42px;
+            }
+        }
+
+        @media (max-height: 700px) {
+            .top-layer {
+                height: 24%;
+                min-height: 120px;
+            }
+            .pipeline {
+                transform: scale(0.65);
+            }
+            .pipeline-connector {
+                width: 50px;
+                margin: 0 4px;
+            }
+            .pipeline-node {
+                padding: 10px 16px;
+                min-width: 140px;
+            }
+            .latency-value {
+                font-size: 80px;
+            }
+            .latency-unit {
+                font-size: 36px;
+            }
+            .middle-layer {
+                height: 44%;
+            }
+            .bottom-layer {
+                height: 32%;
+            }
+            .start-title {
+                font-size: 36px;
+            }
+            .start-subtitle {
+                font-size: 18px;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .pipeline {
+                transform: scale(0.7);
+            }
+            .pipeline-connector {
+                width: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-waves"></div>
+    
+    <!-- START SCREEN -->
+    <div class="start-overlay" id="startOverlay">
+        <div class="start-content">
+            <div class="kavach-logo">KAVACH</div>
+            <h1 class="start-title">Vehicle-to-Pedestrian <span>Safety System</span></h1>
+            <p class="start-subtitle">A real-time simulation demonstrating how low-latency edge computing can save lives at high speeds.</p>
+            <button class="start-btn" id="startBtn">BEGIN SIMULATION</button>
+            <p class="start-hint">Duration: <span class="duration">20</span> seconds • Automatic sequence</p>
+        </div>
+    </div>
+
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="kavach-watermark" id="kavachWatermark">KAVACH</div>
+    <button class="restart-btn" id="restartBtn" onclick="restartSimulation()">↻ REPLAY</button>
+
+    <div class="container">
+        <!-- TOP LAYER - System Flow Pipeline -->
+        <div class="top-layer" id="topLayer">
+            <div class="pipeline">
+                <div class="pipeline-node" id="nodeRadar">
+                    <span class="step-number">1</span>
+                    <h4>RADAR</h4>
+                    <div class="details">
+                        mmWave 77 GHz
+                    </div>
+                </div>
+                <div class="pipeline-connector" id="conn1">
+                    <span class="latency-label">3 <span class="ms-unit">ms</span></span>
+                </div>
+                <div class="pipeline-node mcu-node" id="nodeMCU">
+                    <span class="step-number">2</span>
+                    <h4>ON-VEHICLE MCU</h4>
+                    <div class="details">
+                        <div class="ttc-highlight">
+                            <span class="ttc-label">TTC</span>
+                            <span class="ttc-value">1.8<span class="ttc-unit">s</span></span>
+                        </div>
+                        <div class="mcu-risk">Risk Level: <span class="risk-high">HIGH</span></div>
+                        <div class="mcu-compute">Compute: <span class="ms-tag">3</span> <span class="ms-unit">ms</span></div>
+                    </div>
+                </div>
+                <div class="pipeline-connector" id="conn2">
+                    <span class="latency-label">+ 8 <span class="ms-unit">ms</span></span>
+                </div>
+                <div class="pipeline-node mec-node" id="nodeMEC">
+                    <span class="step-number">3</span>
+                    <h4>MEC (EDGE)</h4>
+                    <div class="details">
+                        <div class="mec-features">
+                            <div class="mec-feature"><span class="mec-icon">⚡</span> Priority Safety Msg</div>
+                            <div class="mec-feature"><span class="mec-icon">🌐</span> Geo-Filtered Route</div>
+                            <div class="mec-feature"><span class="mec-icon">⏱</span> TTL Enforcement</div>
+                            <div class="mec-feature"><span class="mec-icon">🔒</span> Traffic Isolation</div>
+                        </div>
+                        <div class="mec-process">Process: <span class="ms-tag">10</span> <span class="ms-unit">ms</span></div>
+                    </div>
+                </div>
+                <div class="pipeline-connector" id="conn3">
+                    <span class="latency-label">+ 7 <span class="ms-unit">ms</span></span>
+                </div>
+                <div class="pipeline-node" id="nodeAlert">
+                    <span class="step-number">4</span>
+                    <h4>PEDESTRIAN ALERT</h4>
+                    <div class="details">
+                        5G URLLC
+                    </div>
+                </div>
+            </div>
+            <p class="pipeline-caption" id="pipelineCaption">Local decision before any network transmission</p>
+        </div>
+
+        <!-- MIDDLE LAYER - Road & Vehicle -->
+        <div class="middle-layer">
+            <div class="road">
+                <div class="road-lines"></div>
+            </div>
+
+            <div class="vehicle" id="vehicle">
+                <div class="radar-module">
+                    <div class="radar-label">RADAR (mmWave)</div>
+                    <div class="radar-sublabel">Distance • Velocity</div>
+                </div>
+                <div class="radar-cone" id="radarCone"></div>
+                <div class="vehicle-body">
+                    <div class="vehicle-headlights">
+                        <div class="headlight"></div>
+                        <div class="headlight"></div>
+                    </div>
+                </div>
+                <div class="vehicle-wheels">
+                    <div class="wheel"></div>
+                    <div class="wheel"></div>
+                </div>
+                <div class="speed-label">Speed: <span class="speed-value">150 km/h</span></div>
+            </div>
+
+            <div class="pedestrian" id="pedestrian">
+                <div class="pedestrian-glow"></div>
+                <div class="pedestrian-icon">
+                    <div class="pedestrian-head"></div>
+                    <div class="pedestrian-body"></div>
+                    <div class="pedestrian-legs">
+                        <div class="pedestrian-leg"></div>
+                        <div class="pedestrian-leg"></div>
+                    </div>
+                </div>
+                <div class="pedestrian-phone">
+                    <div class="phone-body">
+                        <div class="phone-screen">⚠</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detection-info" id="detectionInfo">
+                <p>Pedestrian detected</p>
+                <span>Distance: <span class="distance-value">52 m</span></span>
+            </div>
+
+            <div class="alert-popup" id="alertPopup">
+                <div class="alert-icon">⚠</div>
+                <div class="alert-title">VEHICLE APPROACHING</div>
+                <div class="alert-subtitle">TAKE IMMEDIATE CAUTION</div>
+                <div class="alert-time">Alert delivered in <span class="ms-highlight">28</span> <span class="ms-unit">ms</span></div>
+            </div>
+        </div>
+
+        <!-- BOTTOM LAYER - Latency Display -->
+        <div class="bottom-layer" id="bottomLayer">
+            <div class="latency-display">
+                <div class="latency-label-main">END-TO-END LATENCY</div>
+                <div class="latency-value-container">
+                    <span class="latency-value" id="latencyValue">0</span>
+                    <span class="latency-unit">ms</span>
+                </div>
+                <div class="speed-context">Speed: <span class="speed-val">150 km/h</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PHASE B - Summary Overlay -->
+    <div class="summary-overlay" id="summaryOverlay">
+        <div class="summary-content">
+            <div class="summary-section">
+                <h3>WHAT KAVACH USES</h3>
+                <ul>
+                    <li>Automotive mmWave radar (77 GHz)</li>
+                    <li>On-vehicle MCU with TTC calculation</li>
+                    <li>MEC with priority safety handling</li>
+                    <li>Geo-filtered routing + TTL enforcement</li>
+                    <li>5G URLLC smartphone alerts</li>
+                </ul>
+                <p class="caption">All components exist today.</p>
+            </div>
+
+            <div class="summary-section">
+                <div class="flow-display">
+                    <h3 style="text-align: center;">WHAT THIS SYSTEM DOES</h3>
+                    <div class="flow-step">Detect</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step">Decide</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step">Deliver</div>
+                </div>
+            </div>
+
+            <div class="summary-section">
+                <h3>WHY KAVACH IS DIFFERENT</h3>
+                <table class="comparison-table">
+                    <tr>
+                        <th>Aspect</th>
+                        <th>Existing</th>
+                        <th>KAVACH</th>
+                    </tr>
+                    <tr>
+                        <td>Pedestrian awareness</td>
+                        <td class="existing"><span class="cross">✗</span> None</td>
+                        <td class="kavach"><span class="check">✓</span> Early</td>
+                    </tr>
+                    <tr>
+                        <td>Decision point</td>
+                        <td class="existing">Late</td>
+                        <td class="kavach">Early</td>
+                    </tr>
+                    <tr>
+                        <td>Compute location</td>
+                        <td class="existing">Cloud/Driver</td>
+                        <td class="kavach">Vehicle+Edge</td>
+                    </tr>
+                    <tr>
+                        <td>Latency visibility</td>
+                        <td class="existing"><span class="cross">✗</span></td>
+                        <td class="kavach"><span class="check">✓</span> Explicit</td>
+                    </tr>
+                    <tr>
+                        <td>Works at high speed</td>
+                        <td class="existing"><span class="cross">✗</span></td>
+                        <td class="kavach"><span class="check">✓</span></td>
+                    </tr>
+                    <tr>
+                        <td>Human-centric</td>
+                        <td class="existing"><span class="cross">✗</span></td>
+                        <td class="kavach"><span class="check">✓</span></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p class="footer-disclaimer">
+                <strong style="color: var(--teal-bright); font-size: 16px;">KAVACH</strong> is a functional V2P safety system simulation. Real deployment replaces simulated elements with automotive radar, vehicle controllers, MEC infrastructure, and 5G URLLC — while preserving the same architecture and timing logic.
+            </p>
+            <p class="footer-tagline">
+                At high speed, safety is a latency problem. <span>KAVACH solves it.</span>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Simulation state
+        let simulationStarted = false;
+        let animationFrame;
+        let timeouts = [];
+
+        // Elements
+        const startOverlay = document.getElementById('startOverlay');
+        const startBtn = document.getElementById('startBtn');
+        const vehicle = document.getElementById('vehicle');
+        const pedestrian = document.getElementById('pedestrian');
+        const detectionInfo = document.getElementById('detectionInfo');
+        const alertPopup = document.getElementById('alertPopup');
+        const topLayer = document.getElementById('topLayer');
+        const bottomLayer = document.getElementById('bottomLayer');
+        const summaryOverlay = document.getElementById('summaryOverlay');
+        const progressBar = document.getElementById('progressBar');
+        const restartBtn = document.getElementById('restartBtn');
+        const latencyValue = document.getElementById('latencyValue');
+        const pipelineCaption = document.getElementById('pipelineCaption');
+
+        const nodeRadar = document.getElementById('nodeRadar');
+        const nodeMCU = document.getElementById('nodeMCU');
+        const nodeMEC = document.getElementById('nodeMEC');
+        const nodeAlert = document.getElementById('nodeAlert');
+        const conn1 = document.getElementById('conn1');
+        const conn2 = document.getElementById('conn2');
+        const conn3 = document.getElementById('conn3');
+        const kavachWatermark = document.getElementById('kavachWatermark');
+
+        // Start button click handler
+        startBtn.addEventListener('click', () => {
+            startOverlay.classList.add('hidden');
+            setTimeout(() => {
+                startSimulation();
+            }, 500);
+        });
+
+        function clearTimeouts() {
+            timeouts.forEach(t => clearTimeout(t));
+            timeouts = [];
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+        }
+
+        function resetSimulation() {
+            clearTimeouts();
+            
+            // Reset vehicle
+            vehicle.style.transition = 'none';
+            vehicle.style.left = '-120px';
+            
+            // Reset pedestrian
+            pedestrian.classList.remove('visible', 'alert');
+            
+            // Reset info
+            detectionInfo.classList.remove('visible');
+            alertPopup.classList.remove('visible');
+            
+            // Reset layers
+            topLayer.classList.remove('active');
+            bottomLayer.classList.remove('active');
+            summaryOverlay.classList.remove('visible');
+            
+            // Reset pipeline
+            [nodeRadar, nodeMCU, nodeMEC, nodeAlert].forEach(n => n.classList.remove('active'));
+            [conn1, conn2, conn3].forEach(c => c.classList.remove('active'));
+            pipelineCaption.classList.remove('active');
+            
+            // Reset latency
+            latencyValue.textContent = '0';
+            
+            // Reset progress
+            progressBar.style.width = '0%';
+            
+            // Reset button
+            restartBtn.classList.remove('visible');
+        }
+
+        function animateLatency(target, duration) {
+            const start = parseInt(latencyValue.textContent);
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const current = Math.round(start + (target - start) * progress);
+                latencyValue.textContent = current;
+                
+                if (progress < 1) {
+                    animationFrame = requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        function updateProgress(percent) {
+            progressBar.style.width = percent + '%';
+        }
+
+        function startSimulation() {
+            if (simulationStarted) return;
+            simulationStarted = true;
+
+            resetSimulation();
+
+            // Force reflow
+            void vehicle.offsetWidth;
+
+            // Start vehicle movement - stop at 45% to avoid collision with pedestrian at 12%
+            vehicle.style.transition = 'left 20s linear';
+            vehicle.style.left = '45%';
+
+            // Phase timing in ms
+            const phases = {
+                vehicleStart: 0,
+                pedestrianAppear: 4000,
+                detection: 4500,
+                pipelineShow: 7000,
+                mcuActive: 7500,
+                mecActive: 11000,
+                transmissionStart: 15000,
+                alertShow: 18000,
+                summaryShow: 22000
+            };
+
+            // Progress tracking
+            let progressStart = Date.now();
+            let progressInterval;
+            
+            function trackProgress() {
+                const elapsed = Date.now() - progressStart;
+                const percent = Math.min((elapsed / 20000) * 100, 100);
+                updateProgress(percent);
+                if (percent < 100) {
+                    progressInterval = requestAnimationFrame(trackProgress);
+                }
+            }
+            trackProgress();
+
+            // 4s: Pedestrian appears
+            timeouts.push(setTimeout(() => {
+                pedestrian.classList.add('visible');
+            }, phases.pedestrianAppear));
+
+            // 4.5s: Detection info
+            timeouts.push(setTimeout(() => {
+                detectionInfo.classList.add('visible');
+            }, phases.detection));
+
+            // 7s: Pipeline appears, radar node active
+            timeouts.push(setTimeout(() => {
+                topLayer.classList.add('active');
+                nodeRadar.classList.add('active');
+            }, phases.pipelineShow));
+
+            // 7.5s: MCU active
+            timeouts.push(setTimeout(() => {
+                conn1.classList.add('active');
+                nodeMCU.classList.add('active');
+                pipelineCaption.classList.add('active');
+            }, phases.mcuActive));
+
+            // 11s: MEC active
+            timeouts.push(setTimeout(() => {
+                pipelineCaption.classList.remove('active');
+                conn2.classList.add('active');
+                nodeMEC.classList.add('active');
+            }, phases.mecActive));
+
+            // 15s: Transmission & latency emphasis
+            timeouts.push(setTimeout(() => {
+                conn3.classList.add('active');
+                nodeAlert.classList.add('active');
+                bottomLayer.classList.add('active');
+                animateLatency(28, 1500);
+            }, phases.transmissionStart));
+
+            // 18s: Pedestrian alert - hide detection info first
+            timeouts.push(setTimeout(() => {
+                detectionInfo.classList.remove('visible');
+            }, phases.alertShow - 300));
+
+            timeouts.push(setTimeout(() => {
+                pedestrian.classList.add('alert');
+                alertPopup.classList.add('visible');
+            }, phases.alertShow));
+
+            // 22s: Summary overlay
+            timeouts.push(setTimeout(() => {
+                summaryOverlay.classList.add('visible');
+                restartBtn.classList.add('visible');
+                simulationStarted = false;
+            }, phases.summaryShow));
+        }
+
+        function restartSimulation() {
+            simulationStarted = false;
+            resetSimulation();
+            
+            // Hide start overlay if visible
+            startOverlay.classList.add('hidden');
+            
+            setTimeout(() => {
+                startSimulation();
+            }, 100);
+        }
+
+        // No auto-start - wait for button click
+    </script>
+</body>
+</html>
